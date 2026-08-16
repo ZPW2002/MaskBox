@@ -30,12 +30,12 @@
         <el-table-column :label="t('common.actions')" width="200">
           <template #default="{ row }">
             <template v-if="!row.builtin">
-              <el-button size="small" @click="openEdit(row)">{{ t('common.edit') }}</el-button>
+              <el-button size="small" @click="openEdit(row as Mask)">{{ t('common.edit') }}</el-button>
               <el-popconfirm
                 :title="t('masks.deleteConfirm', { name: row.name })"
                 :confirm-button-text="t('common.confirm')"
                 :cancel-button-text="t('common.cancel')"
-                @confirm="removeMask(row)"
+                @confirm="removeMask(row as Mask)"
               >
                 <template #reference>
                   <el-button size="small" type="danger" plain>{{ t('common.delete') }}</el-button>
@@ -83,28 +83,26 @@
 <script setup lang="ts">
 import { onMounted, reactive, ref } from 'vue'
 import { ElMessage } from 'element-plus'
+import 'element-plus/es/components/message/style/css'
 import { Plus } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 
 import { api, apiErrorMessage } from '@/api'
+import { useMasks } from '@/stores/masks'
 import type { Mask } from '@/types'
 
 const { t } = useI18n()
-const masks = ref<Mask[]>([])
-const loading = ref(false)
+const { masks, loading, loadMasks: fetchMasks } = useMasks()
 const submitting = ref(false)
 const dialogVisible = ref(false)
 const editingId = ref<number | null>(null)
 const form = reactive<{ name: string; clsid: string }>({ name: '', clsid: '' })
 
 async function loadMasks(): Promise<void> {
-  loading.value = true
   try {
-    masks.value = (await api.masks()).data
+    await fetchMasks()
   } catch (error) {
     ElMessage.error(apiErrorMessage(error))
-  } finally {
-    loading.value = false
   }
 }
 

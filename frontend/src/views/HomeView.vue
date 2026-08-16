@@ -43,9 +43,11 @@
       <div
         id="drop-zone"
         class="drop-zone"
-        :class="{ 'is-dragging': dragging }"
-        @dragenter.prevent="dragging = true"
-        @dragleave.prevent="dragging = false"
+        :class="{ 'is-dragging': dragDepth > 0 }"
+        @dragenter.prevent="dragDepth++"
+        @dragleave.prevent="dragDepth--"
+        @drop.prevent="dragDepth = 0"
+        @dragend="dragDepth = 0"
       >
         <el-icon class="drop-icon"><UploadFilled /></el-icon>
         <span>{{ t('home.dropHint') }}</span>
@@ -109,24 +111,24 @@
             </template>
           </el-table-column>
           <el-table-column :label="t('home.mask')" min-width="120">
-            <template #default="{ row }">{{ row.mask?.name || '—' }}</template>
+            <template #default="{ row }">{{ row.mask?.name || '-' }}</template>
           </el-table-column>
           <el-table-column :label="t('home.updatedAt')" width="170">
             <template #default="{ row }">{{ formatTime(row.updated_at) }}</template>
           </el-table-column>
           <el-table-column :label="t('common.actions')" width="240" fixed="right">
             <template #default="{ row }">
-              <el-button size="small" @click="openEditDialog(row)">
+              <el-button size="small" @click="openEditDialog(row as FolderItem)">
                 {{ t('common.edit') }}
               </el-button>
-              <el-button size="small" :type="row.hidden ? 'success' : 'warning'" plain @click="toggleHide(row)">
+              <el-button size="small" :type="row.hidden ? 'success' : 'warning'" plain @click="toggleHide(row as FolderItem)">
                 {{ row.hidden ? t('home.toggleRestore') : t('home.toggleHide') }}
               </el-button>
               <el-popconfirm
                 :title="t('home.deleteConfirm', { count: 1 })"
                 :confirm-button-text="t('common.confirm')"
                 :cancel-button-text="t('common.cancel')"
-                @confirm="removeFolder(row)"
+                @confirm="removeFolder(row as FolderItem)"
               >
                 <template #reference>
                   <el-button size="small" type="danger" plain>{{ t('common.delete') }}</el-button>
@@ -143,87 +145,45 @@
       </template>
     </el-card>
 
-    <el-dialog
+    <FolderDialog
       v-model="dialogVisible"
-      :title="editingId === null ? t('home.addDialogTitle') : t('home.editDialogTitle')"
-      width="560px"
-      destroy-on-close
-    >
-      <el-form label-width="110px">
-        <el-form-item :label="t('home.path')">
-          <el-input
-            :model-value="folderForm.path"
-            readonly
-            @click="editingId === null ? selectNativeFolder() : undefined"
-          >
-            <template #append>
-              <el-button v-if="editingId === null" @click="selectNativeFolder">
-                {{ t('home.selectFolder') }}
-              </el-button>
-            </template>
-          </el-input>
-        </el-form-item>
-        <el-form-item :label="t('home.displayName')">
-          <el-input v-model="folderForm.display_name" maxlength="255" />
-        </el-form-item>
-        <el-form-item :label="t('home.hiddenSwitch')">
-          <el-switch v-model="folderForm.hidden" />
-        </el-form-item>
-        <el-form-item :label="t('home.maskLabel')">
-          <el-select v-model="folderForm.mask_id" clearable :placeholder="t('home.noMask')">
-            <el-option
-              v-for="mask in masks"
-              :key="mask.id"
-              :label="mask.name + (mask.clsid ? '' : ' *')"
-              :value="mask.id"
-            />
-          </el-select>
-        </el-form-item>
-      </el-form>
-      <template #footer>
-        <el-button @click="dialogVisible = false">{{ t('common.cancel') }}</el-button>
-        <el-button type="primary" :loading="submitting" @click="submitFolder">
-          {{ t('common.save') }}
-        </el-button>
-      </template>
-    </el-dialog>
+      :masks="masks"
+      :editing="editingRow"
+      :submitting="submitting"
+      :initial-path="pendingDropPath"
+      @submit="submitFolder"
+    />
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, onUnmounted, reactive, ref } from 'vue'
+import { computed, onMounted, onUnmounted, ref } from 'vue'
 import { ElMessage, ElMessageBox } from 'element-plus'
+import 'element-plus/es/components/message/style/css'
+import 'element-plus/es/components/message-box/style/css'
 import { Plus, Refresh, Search, UploadFilled } from '@element-plus/icons-vue'
 import { useI18n } from 'vue-i18n'
 
 import { api, apiErrorMessage } from '@/api'
-import type { FolderItem, FolderPayload, Mask } from '@/types'
+import FolderDialog from '@/components/FolderDialog.vue'
+import { useMasks } from '@/stores/masks'
+import type { FolderItem, FolderPayload } from '@/types'
 import { installNativeDropBridge } from '@/utils/native'
 
 const { t } = useI18n()
 const folders = ref<FolderItem[]>([])
-const masks = ref<Mask[]>([])
 const loading = ref(false)
 const submitting = ref(false)
 const search = ref('')
 const sort = ref('created_at')
 const selection = ref<FolderItem[]>([])
 const dialogVisible = ref(false)
-const editingId = ref<number | null>(null)
-const dragging = ref(false)
+const editingRow = ref<FolderItem | null>(null)
+const pendingDropPath = ref('')
+const dragDepth = ref(0)
 let removeNativeBridge: (() => void) | null = null
 
-const folderForm = reactive<{
-  path: string
-  display_name: string
-  hidden: boolean
-  mask_id: number | null
-}>({
-  path: '',
-  display_name: '',
-  hidden: false,
-  mask_id: null,
-})
+const { masks, loadMasks: fetchMasks } = useMasks()
 
 const missingFolders = computed(() => folders.value.filter((item) => item.missing))
 const showGuide = computed(
@@ -244,88 +204,59 @@ async function loadFolders(): Promise<void> {
 
 async function loadMasks(): Promise<void> {
   try {
-    const envelope = await api.masks()
-    masks.value = envelope.data
+    await fetchMasks()
   } catch (error) {
     ElMessage.error(apiErrorMessage(error))
   }
 }
 
 function openAddDialog(): void {
-  editingId.value = null
-  Object.assign(folderForm, { path: '', display_name: '', hidden: false, mask_id: null })
+  editingRow.value = null
+  pendingDropPath.value = ''
   dialogVisible.value = true
-  localStorage.setItem('maskbox.onboarded', '1')
 }
 
 function openEditDialog(row: FolderItem): void {
-  editingId.value = row.id
-  Object.assign(folderForm, {
-    path: row.path,
-    display_name: row.display_name,
-    hidden: row.hidden,
-    mask_id: row.mask?.id ?? null,
-  })
+  editingRow.value = row
   dialogVisible.value = true
-}
-
-async function selectNativeFolder(): Promise<void> {
-  const picker = window.pywebview?.api?.select_folder
-  if (!picker) {
-    const manual = window.prompt(t('home.path'))
-    if (manual) {
-      folderForm.path = manual.trim()
-      folderForm.display_name = manual.trim().split(/[\\/]/).filter(Boolean).pop() || manual.trim()
-    }
-    return
-  }
-  try {
-    const result = await picker()
-    if (!result.ok || !result.path) return
-    folderForm.path = result.path
-    folderForm.display_name = result.folder || folderForm.path.split(/[\\/]/).pop() || result.path
-  } catch (error) {
-    ElMessage.error(apiErrorMessage(error))
-  }
 }
 
 function applyDroppedPath(path: string): void {
   const trimmed = path.trim()
   if (!trimmed) return
-  const parts = trimmed.split(/[\\/]/).filter(Boolean)
-  openAddDialog()
-  folderForm.path = trimmed
-  folderForm.display_name = parts[parts.length - 1] || trimmed
-  dragging.value = false
+  editingRow.value = null
+  pendingDropPath.value = trimmed
+  dialogVisible.value = true
+  dragDepth.value = 0
 }
 
-async function submitFolder(): Promise<void> {
-  if (!folderForm.path) {
-    ElMessage.warning(t('home.dropHint'))
-    return
-  }
-  const payload: FolderPayload = {
-    path: folderForm.path,
-    display_name: folderForm.display_name,
-    hidden: folderForm.hidden,
-    mask_id: folderForm.mask_id,
-  }
+function onDropPaths(paths: string[]): void {
+  if (paths.length > 1) ElMessage.info(t('home.multiDropTip'))
+  if (paths[0]) applyDroppedPath(paths[0])
+}
+
+function markOnboarded(): void {
+  localStorage.setItem('maskbox.onboarded', '1')
+}
+
+async function submitFolder(payload: FolderPayload): Promise<void> {
   submitting.value = true
   try {
-    if (editingId.value === null) {
+    if (editingRow.value === null) {
       await api.createFolder(payload)
     } else {
-      await api.updateFolder(editingId.value, payload)
+      await api.updateFolder(editingRow.value.id, payload)
     }
     ElMessage.success(t('common.success'))
     dialogVisible.value = false
+    markOnboarded()
     await loadFolders()
   } catch (error) {
     const message = apiErrorMessage(error)
     if ((error as { response?: { status?: number } }).response?.status === 409) {
       const detail = (error as { response?: { data?: { data?: { reason?: string } } } }).response?.data?.data
       if (detail?.reason === 'running_program') {
-        confirmRunningProgram()
+        confirmRunningProgram(payload)
         return
       }
     }
@@ -335,7 +266,7 @@ async function submitFolder(): Promise<void> {
   }
 }
 
-async function confirmRunningProgram(): Promise<void> {
+async function confirmRunningProgram(payload: FolderPayload): Promise<void> {
   try {
     await ElMessageBox.confirm(t('home.forceConfirmText'), t('home.forceConfirmTitle'), {
       type: 'warning',
@@ -347,13 +278,14 @@ async function confirmRunningProgram(): Promise<void> {
   }
   submitting.value = true
   try {
-    const payload: FolderPayload = { ...folderForm, force: true }
-    if (editingId.value === null) {
-      await api.createFolder(payload)
+    const forced = { ...payload, force: true }
+    if (editingRow.value === null) {
+      await api.createFolder(forced)
     } else {
-      await api.updateFolder(editingId.value, payload)
+      await api.updateFolder(editingRow.value.id, forced)
     }
     dialogVisible.value = false
+    markOnboarded()
     ElMessage.success(t('common.success'))
     await loadFolders()
   } catch (error) {
@@ -383,16 +315,26 @@ async function removeFolder(row: FolderItem): Promise<void> {
 }
 
 async function batchToggle(hidden: boolean): Promise<void> {
-  try {
-    for (const row of selection.value) {
-      if (row.hidden === hidden) continue
-      await api.updateFolder(row.id, { hidden })
+  let ok = 0
+  let fail = 0
+  let skip = 0
+  for (const row of selection.value) {
+    // 丢失的目标改不了属性；状态已符合的无需请求。
+    if (row.missing || row.hidden === hidden) {
+      skip++
+      continue
     }
-    ElMessage.success(t('home.batchResult'))
-    await loadFolders()
-  } catch (error) {
-    ElMessage.error(apiErrorMessage(error))
+    try {
+      await api.updateFolder(row.id, { hidden })
+      ok++
+    } catch {
+      fail++
+    }
   }
+  const summary = t('home.batchSummary', { ok, fail, skip })
+  if (fail > 0) ElMessage.warning(summary)
+  else ElMessage.success(summary)
+  await loadFolders()
 }
 
 async function confirmBatchDelete(): Promise<void> {
@@ -427,13 +369,18 @@ async function removeMissingFolders(): Promise<void> {
 }
 
 function formatTime(value: string): string {
-  return value.replace('T', ' ').slice(0, 19)
+  // 后端存的是 UTC ISO 串；必须转成本地时区再显示。
+  const date = new Date(value)
+  if (Number.isNaN(date.getTime())) return value
+  const pad = (n: number) => String(n).padStart(2, '0')
+  return (
+    `${date.getFullYear()}-${pad(date.getMonth() + 1)}-${pad(date.getDate())} ` +
+    `${pad(date.getHours())}:${pad(date.getMinutes())}:${pad(date.getSeconds())}`
+  )
 }
 
 onMounted(() => {
-  removeNativeBridge = installNativeDropBridge((paths) => {
-    if (paths[0]) applyDroppedPath(paths[0])
-  })
+  removeNativeBridge = installNativeDropBridge(onDropPaths)
   void loadFolders()
   void loadMasks()
 })
