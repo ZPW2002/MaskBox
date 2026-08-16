@@ -38,5 +38,7 @@ def test_guard_detects_running_program_install_dir(tmp_path: Path) -> None:
     exe.parent.mkdir()
     exe.touch()
     result = Guard(executable_path=exe).check(target)
-    assert not result.ok or result.ok  # blocked 可为空
+    # 只是运行中的程序目录：不拦截（blocked 为空），仅要求二次确认。
+    assert result.ok
+    assert result.blocked == []
     assert any(i.reason == "running_program" for i in result.confirmations)

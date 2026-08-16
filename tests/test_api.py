@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from pathlib import Path
 
+from backend.api.routes import _normalize_path
 from backend.app import build_app
 
 
@@ -9,6 +10,19 @@ def _create_dir(root: Path, name: str) -> Path:
     folder = root / name
     folder.mkdir()
     return folder
+
+
+def test_normalize_path_unifies_windows_path_spellings() -> None:
+    """同一 Windows 目录的不同写法必须收敛为同一条规范路径。"""
+    assert _normalize_path("D:/Foo/Bar/") == "D:\\Foo\\Bar"
+    assert _normalize_path("D:\\Foo\\Bar\\") == "D:\\Foo\\Bar"
+    assert _normalize_path("D:\\Foo\\..\\Bar") == "D:\\Bar"
+    # 大小写保留（用于展示），去重交给 NOCASE 查询。
+    assert _normalize_path("d:/foo") == "d:\\foo"
+
+
+def test_normalize_path_posix_stays_absolute(tmp_path: Path) -> None:
+    assert _normalize_path(str(tmp_path / "sub")) == str(tmp_path / "sub")
 
 
 def test_health_and_bind_loopback() -> None:

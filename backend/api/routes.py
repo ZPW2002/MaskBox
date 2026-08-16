@@ -67,10 +67,13 @@ def _normalize_path(value: Any) -> str:
     if not isinstance(value, str) or not value.strip():
         raise ApiError(400, "error.path_required")
     cleaned = os.path.expanduser(value.strip())
-    # Windows 风格路径在 Linux/CI 上不能做 POSIX abspath；先保留原样交给 guard。
+    # Windows 风格路径在 Linux/CI 上不能做 POSIX abspath；用 ntpath.normpath
+    # 统一斜杠方向、消掉尾部分隔符，否则 "D:/foo" 与 "D:\foo\" 会成为两条记录。
     import ntpath
 
-    return cleaned if ntpath.splitdrive(cleaned)[0] else os.path.abspath(cleaned)
+    if ntpath.splitdrive(cleaned)[0]:
+        return ntpath.normpath(cleaned)
+    return os.path.abspath(cleaned)
 
 
 def _validated_mask_id(db: Database, value: Any) -> int | None:

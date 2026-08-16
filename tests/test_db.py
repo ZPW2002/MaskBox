@@ -56,6 +56,18 @@ def test_duplicate_original_path_rejected(storage: StorageConfig, tmp_path: Path
         db.close()
 
 
+def test_duplicate_windows_path_different_case_rejected(storage: StorageConfig) -> None:
+    """Windows 大小写不敏感：C:\\Foo 与 C:\\foo 是同一目录，不能存两条。"""
+    db = Database(storage.db_path, legacy_db_paths=[])
+    try:
+        db.create_folder("C:\\Foo", "Foo", False, None)
+        with pytest.raises(IntegrityError):
+            db.create_folder("C:\\foo", "foo", False, None)
+        assert db.get_folder_by_original_path("c:\\FOO") is not None
+    finally:
+        db.close()
+
+
 def test_legacy_migration_restores_eight_records(storage: StorageConfig, legacy_db: Path) -> None:
     db = Database(storage.db_path, legacy_db_paths=[legacy_db])
     try:

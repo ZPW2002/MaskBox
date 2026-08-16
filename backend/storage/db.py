@@ -314,10 +314,11 @@ class Database:
         return _row_to_folder(row) if row else None
 
     def get_folder_by_original_path(self, original_path: str) -> FolderRecord | None:
+        # Windows 文件系统大小写不敏感，同一目录不同大小写必须命中同一条记录。
         with self._lock:
             row = self.conn.execute(
                 "SELECT id, original_path, display_name, hidden, mask_id, created_at, updated_at"
-                " FROM folders WHERE original_path = ?",
+                " FROM folders WHERE original_path = ? COLLATE NOCASE",
                 (original_path,),
             ).fetchone()
         return _row_to_folder(row) if row else None
