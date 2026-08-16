@@ -41,10 +41,12 @@ MaskBox (formerly HideTool) is a Windows-only, local-first folder toolbox. It hi
 
 要求：Windows 10 1809+（使用系统自带的 WebView2 运行时）。
 
-**v2.0.0**：
+**v2.0.1（最新）**：
 
-- 下载：[MaskBox-v2.0.0-windows-portable.zip](https://github.com/ZPW2002/MaskBox/releases/download/v2.0.0/MaskBox-v2.0.0-windows-portable.zip)
-- SHA256：`2f8529e89039e431113b8f3d2cc0838a3f9b37b31f5f61a70b6781be5a4ce320`
+- 下载：[MaskBox-v2.0.1-windows-portable.zip](https://github.com/ZPW2002/MaskBox/releases/download/v2.0.1/MaskBox-v2.0.1-windows-portable.zip)
+- SHA256：`6944374530c4eec06432642357b9def8a9ca9d85193730233379dd315db99c57`
+
+> v2.0.0 曾因 PyInstaller 冻结后的前端资源路径错误显示 “Frontend not built”，已在 v2.0.1 修复并撤回旧 Release。
 
 ### 从源码运行 / From source
 

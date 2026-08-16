@@ -5,6 +5,13 @@
 格式基于 [Keep a Changelog](https://keepachangelog.com/zh-CN/1.1.0/)，
 版本号遵循 [Semantic Versioning](https://semver.org/lang/zh-CN/)。
 
+## [2.0.1] - 2026-08-16
+
+### Fixed
+
+- 修复 PyInstaller 冻结后前端资源目录解析错误：发布包运行时不再显示 “Frontend not built”。
+- 添加冻结路径回归测试（`sys._MEIPASS/frontend/dist`）。
+
 ## [2.0.0] - 2026-08-10
 
 MaskBox 首个公开版本（由 HideTool 全面重构并更名）。
