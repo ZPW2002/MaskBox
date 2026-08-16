@@ -1,0 +1,17 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="900" height="500" viewBox="0 0 900 500">
+  <rect width="900" height="500" rx="18" fill="#f5f7fa"/>
+  <rect x="28" y="24" width="844" height="58" rx="12" fill="#ffffff" stroke="#e4e7ed"/>
+  <circle cx="64" cy="53" r="14" fill="#4d9fff"/>
+  <text x="90" y="60" font-family="Segoe UI, sans-serif" font-size="20" font-weight="700" fill="#303133">MaskBox</text>
+  <text x="710" y="60" font-family="Segoe UI, sans-serif" font-size="14" fill="#909399">面具管理 / Masks</text>
+  <rect x="28" y="100" width="844" height="372" rx="12" fill="#ffffff" stroke="#e4e7ed"/>
+  <g font-family="Segoe UI, sans-serif" font-size="14" fill="#303133">
+    <text x="60" y="140">回收站</text>
+    <text x="240" y="140" fill="#909399">{645FF040-5081-101B-9F08-00AA002F954E}</text>
+    <text x="60" y="186">无关联文件</text>
+    <text x="240" y="186" fill="#909399">{00021401-0000-0000-C000-000000000046}</text>
+    <text x="60" y="232">新建文件夹 *</text>
+    <text x="240" y="232" fill="#909399">名称伪装（无 CLSID）</text>
+  </g>
+  <text x="450" y="450" text-anchor="middle" font-family="Segoe UI, sans-serif" font-size="12" fill="#a8abb2">截图占位 / Screenshot placeholder</text>
+</svg>

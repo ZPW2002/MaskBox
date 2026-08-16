@@ -1,0 +1,50 @@
+name: Bug Report / 问题反馈
+description: 提交 MaskBox 的问题报告
+title: "[Bug] "
+labels: ["bug"]
+body:
+  - type: markdown
+    attributes:
+      value: |
+        感谢反馈。请尽量提供日志，日志文件位于：
+        Windows: `%LOCALAPPDATA%\MaskBox\logs\maskbox.log`
+        便携模式: 程序目录 `logs\maskbox.log`
+  - type: input
+    id: version
+    attributes:
+      label: MaskBox 版本
+      placeholder: 例如 v2.0.0
+    validations:
+      required: true
+  - type: input
+    id: os
+    attributes:
+      label: Windows 版本
+      placeholder: 例如 Windows 11 23H2 / Windows 10 22H2
+    validations:
+      required: true
+  - type: textarea
+    id: repro
+    attributes:
+      label: 复现步骤
+      placeholder: 1. ... 2. ...
+    validations:
+      required: true
+  - type: textarea
+    id: expected
+    attributes:
+      label: 期望行为
+    validations:
+      required: true
+  - type: textarea
+    id: actual
+    attributes:
+      label: 实际行为
+    validations:
+      required: true
+  - type: textarea
+    id: logs
+    attributes:
+      label: 日志
+      description: 请粘贴脱敏后的 maskbox.log（如涉及隐私路径可先打码）
+      render: shell
