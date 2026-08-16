@@ -67,7 +67,7 @@ python -m backend.app
 Release 页面附有 SHA256。PowerShell：
 
 ```powershell
-Get-FileHash .\MaskBox-v2.0.0-windows-portable.zip -Algorithm SHA256
+Get-FileHash .\MaskBox-v2.0.1-windows-portable.zip -Algorithm SHA256
 ```
 
 ## 原理 / How it works

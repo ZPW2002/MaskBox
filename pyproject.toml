@@ -1,9 +1,9 @@
 [project]
 name = "maskbox"
-version = "2.0.0"
 description = "MaskBox - Not just hide, but disguise. A Windows folder hide & disguise toolbox."
 readme = "README.md"
 requires-python = ">=3.10"
+dynamic = ["version"]
 license = { text = "MIT" }
 authors = [{ name = "ZPW2002" }]
 keywords = ["windows", "folder", "mask", "hide", "pywebview", "vue"]
@@ -19,6 +19,9 @@ maskbox = "shell.main:main"
 
 [tool.setuptools]
 packages = ["backend", "backend.core", "backend.storage", "backend.api", "shell"]
+
+[tool.setuptools.dynamic]
+version = { attr = "backend.__version__" }
 
 [tool.ruff]
 line-length = 100
