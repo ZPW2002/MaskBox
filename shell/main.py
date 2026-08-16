@@ -88,11 +88,21 @@ class ShellApi:
         return __version__
 
 
+def build_shell_app():
+    """构建桌面壳使用的 Flask app。
+
+    注意：resource_root 不能手动传成 ROOT。PyInstaller 冻结后 ``__file__``
+    位于 ``_internal/shell/main.py``，ROOT 会变成 exe 所在目录；而前端 dist
+    实际在 ``sys._MEIPASS/frontend/dist``。交给 build_app 自动解析即可。
+    """
+    return build_app(program_dir=ROOT)
+
+
 def main() -> None:
     import webview
 
     # Flask 绑 127.0.0.1 + 随机端口；server.url 才传给 webview。
-    app, storage, server = build_app(program_dir=ROOT, resource_root=ROOT)
+    app, storage, server = build_shell_app()
     server.start()
 
     api = ShellApi()
