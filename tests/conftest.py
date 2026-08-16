@@ -51,7 +51,12 @@ def legacy_db(tmp_path: Path) -> Path:
         " hide varchar(10), mask varchar(50))"
     )
     rows = [
-        ("F:/example-project.{645FF040-5081-101B-9F08-00AA002F954E}", "example-project", "否", "回收站"),
+        (
+            "F:/example-project.{645FF040-5081-101B-9F08-00AA002F954E}",
+            "example-project",
+            "否",
+            "回收站",
+        ),
         (
             "F:/example-archive.{00021401-0000-0000-C000-000000000046}",
             "example-archive",

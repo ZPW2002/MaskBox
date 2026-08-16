@@ -1,10 +1,15 @@
 # -*- mode: python ; coding: utf-8 -*-
 """PyInstaller spec：MaskBox Windows 便携版（单目录）。"""
+import os
+
 from PyInstaller.utils.hooks import collect_all
 
 webview_datas, webview_binaries, webview_hiddenimports = collect_all("webview")
 
-datas = [("../frontend/dist", "frontend/dist")] + webview_datas
+# PyInstaller spec 中的相对路径以运行目录为准；SPECPATH 才是 spec 文件所在目录。
+_frontend_dist = os.path.join(SPECPATH, "frontend", "dist")
+
+datas = [(_frontend_dist, "frontend/dist")] + webview_datas
 binaries = webview_binaries
 hiddenimports = webview_hiddenimports + [
     "flask",
