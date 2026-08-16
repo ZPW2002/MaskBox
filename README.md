@@ -41,6 +41,11 @@ MaskBox (formerly HideTool) is a Windows-only, local-first folder toolbox. It hi
 
 要求：Windows 10 1809+（使用系统自带的 WebView2 运行时）。
 
+**v2.0.0**：
+
+- 下载：[MaskBox-v2.0.0-windows-portable.zip](https://github.com/ZPW2002/MaskBox/releases/download/v2.0.0/MaskBox-v2.0.0-windows-portable.zip)
+- SHA256：`2f8529e89039e431113b8f3d2cc0838a3f9b37b31f5f61a70b6781be5a4ce320`
+
 ### 从源码运行 / From source
 
 ```bash
