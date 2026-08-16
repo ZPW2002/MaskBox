@@ -299,7 +299,7 @@ class Database:
                 " WHERE (f.original_path LIKE ? ESCAPE '\\' OR f.display_name LIKE ? ESCAPE '\\')"
             )
             params = (like, like)
-        sql += f" ORDER BY {sort_column}"
+        sql += " ORDER BY " + sort_column
         with self._lock:
             rows = self.conn.execute(sql, params).fetchall()
         return [_row_to_folder(row) for row in rows]
