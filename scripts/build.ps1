@@ -4,6 +4,8 @@ param(
 
 # MaskBox 便携版打包脚本（Windows PowerShell）
 $ErrorActionPreference = "Stop"
+# 兼容 git describe 返回的 v2.0.0 形式，避免产物名出现 "vv2.0.0"。
+$Version = $Version -replace '^v', ''
 $Root = Split-Path -Parent $PSScriptRoot
 Set-Location $Root
 
